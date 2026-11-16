@@ -1,0 +1,42 @@
+{
+  "fixture": "northwind",
+  "today": "2026-11-15",
+  "issues": [
+    { "id": "C1", "check": "contradiction", "description": "v2 launch date: Dec 2 (company) vs Dec 9 (project status)",
+      "files": [{ "path": "company/overview.md", "line": 14 }, { "path": "projects/launch-v2/status.md", "line": 6 }] },
+    { "id": "C2", "check": "contradiction", "description": "Pro price: $49 (pricing) vs $59 (Juno sequences)",
+      "files": [{ "path": "company/pricing.md", "line": 7 }, { "path": "agents/juno/sequences.md", "line": 9 }] },
+    { "id": "C3", "check": "contradiction", "description": "Acme pilot owner: Sam (customers) vs Priya (pilot notes)",
+      "files": [{ "path": "company/customers.md", "line": 9 }, { "path": "projects/acme-pilot/notes.md", "line": 3 }] },
+    { "id": "C4", "check": "contradiction", "description": "P1 escalation SLA: 15 min (policies) vs 60 min (Quill rules)",
+      "files": [{ "path": "company/policies.md", "line": 4 }, { "path": "agents/quill/triage-rules.md", "line": 9 }] },
+    { "id": "S1", "check": "stale", "description": "SOC 2 'blocked (as of Oct 3)', resolved Oct 21 per decisions.md",
+      "files": [{ "path": "projects/launch-v2/status.md", "line": 12 }] },
+    { "id": "S2", "check": "stale", "description": "Acme check-in on Nov 4 still marked upcoming",
+      "files": [{ "path": "projects/acme-pilot/notes.md", "line": 13 }] },
+    { "id": "S3", "check": "stale", "description": "CSV export fix still pending with ETA Oct 30",
+      "files": [{ "path": "agents/quill/known-issues.md", "line": 3 }] },
+    { "id": "D1", "check": "duplicate", "description": "Company one-liner repeated in three files",
+      "files": [{ "path": "company/overview.md", "line": 3 }, { "path": "agents/atlas/accounts.md", "line": 3 }, { "path": "agents/juno/outbound-playbook.md", "line": 4 }] },
+    { "id": "D2", "check": "duplicate", "description": "Refund policy repeated in Quill rules",
+      "files": [{ "path": "company/policies.md", "line": 6 }, { "path": "agents/quill/triage-rules.md", "line": 13 }] },
+    { "id": "D3", "check": "duplicate", "description": "Outbound quiet-hours rule repeated in Juno playbook",
+      "files": [{ "path": "company/policies.md", "line": 9 }, { "path": "agents/juno/outbound-playbook.md", "line": 8 }] },
+    { "id": "L1", "check": "scope_leak", "description": "Maya's personal mobile number in Acme contacts",
+      "files": [{ "path": "projects/acme-pilot/contacts.md", "line": 11 }] },
+    { "id": "L2", "check": "scope_leak", "description": "Maya's dermatologist appointment copied into Acme notes",
+      "files": [{ "path": "projects/acme-pilot/notes.md", "line": 18 }] },
+    { "id": "L3", "check": "scope_leak", "description": "Private comp note (Priya's offer) copied into company/team.md",
+      "files": [{ "path": "company/team.md", "line": 18 }] },
+    { "id": "X1", "check": "secret", "description": "Fake Anthropic API key pasted into Atlas research log",
+      "files": [{ "path": "agents/atlas/research-log.md", "line": 5 }] }
+  ],
+  "decoys": [
+    "company/pricing.md:7 'previously $39 until Aug 31' is dated history, not a conflict",
+    "projects/launch-v2/decisions.md:3 'Pro set at $49 (was $39)' is history",
+    "projects/launch-v2/decisions.md:7 'moved the public launch from Dec 2 to Dec 9' is history",
+    "projects/acme-pilot/contacts.md: Acme business emails/phones are work contacts, not personal",
+    "company/policies.md:21 parental leave / sick days is policy, not personal info",
+    "agents/quill/known-issues.md:5 'Fixed Nov 8' is resolved, not stale"
+  ]
+}
