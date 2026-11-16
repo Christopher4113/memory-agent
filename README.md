@@ -20,7 +20,7 @@ Northwind fixture: 20 files, 14 planted issues plus decoys (`fixtures/northwind/
 With `claude-haiku-5-5`: 233 facts extracted, cold run about 20 seconds, warm (cached) run under 1 second.
 
 - **The false positive:** the key-merging call grouped "SOC 2 vendor questionnaire status" with the unrelated launch checklist item "SOC 2 report not yet shared with Harbor & Rail", and the judge called them a conflict. The real SOC 2 issue (a status blocked "as of Oct 3", resolved Oct 21) is reported as stale, which is correct.
-- **Rough edges:** one contradiction title includes a non-value ("see status.md for the current date") because `plan.md` points to the status file. The duplicate check finds the company one-liner in 2 of its 3 files: the Atlas copy has a prefix that drops similarity below 0.8. It still counts as caught.
+- **Rough edge:** the duplicate check finds the company one-liner in 2 of its 3 files: the Atlas copy has a prefix that drops similarity below 0.8. It still counts as caught.
 - **Without an API key** the four contradictions are missed by design, since they need fact extraction.
 - **Variance:** LLM results can shift between prompt or model changes. They are deterministic on re-runs because responses are cached.
 

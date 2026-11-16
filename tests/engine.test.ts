@@ -6,6 +6,7 @@ import { runAudit } from "../src/engine/audit.js"
 import { evaluate } from "../src/engine/evaluate.js"
 import { mask, maskText } from "../src/engine/checks/secrets.js"
 import { scopeFor } from "../src/engine/scopes.js"
+import { factDate, frontmatterDays, keepListMarker } from "../src/engine/util.js"
 import { AppLive, NoDbLive } from "../src/db/repo.js"
 
 const today = new Date("2026-11-15T12:00:00Z")
@@ -33,6 +34,21 @@ describe("scopes and masking", () => {
     const key = "sk-ant-api03-FAKEk3yN0tR3alDoNotUse-x9Qm2Lp8Vt4Rz7Wc1Yb6Hn5Jd0Fg3KsDEMOONLY"
     expect(mask(key)).toBe("sk-ant…ONLY")
     expect(maskText(`key ${key} here`)).not.toContain("x9Qm2Lp8")
+  })
+})
+
+describe("contradiction helpers", () => {
+  it("ignores frontmatter dates unless the fact's line repeats them", () => {
+    const fm = frontmatterDays(["---", "updated: 2026-11-12T09:14:00Z", "---", "- Escalate P1 within 60 minutes."], today)
+    expect(factDate("2026-11-12", "- Escalate P1 within 60 minutes.", fm, today)).toBeUndefined()
+    expect(factDate("Nov 12, 2026", "- **Nov 12, 2026**: launch moved", fm, today)).toBeDefined()
+    expect(factDate("Oct 3", "blocked (as of Oct 3)", fm, today)).toBeDefined()
+    const fmWithBody = frontmatterDays(["---", "updated: 2026-11-12", "---", "Last updated: Nov 12, 2026", "- Docs: 60%"], today)
+    expect(factDate("Nov 12, 2026", "- Docs: 60%", fmWithBody, today)).toBeDefined()
+  })
+  it("keeps the list marker a rewrite dropped", () => {
+    expect(keepListMarker("- P1 within 60 minutes.", "P1 within 15 minutes.")).toBe("- P1 within 15 minutes.")
+    expect(keepListMarker("Owner: Sam", "Owner: Priya")).toBe("Owner: Priya")
   })
 })
 

@@ -2,7 +2,7 @@ import { Effect, Schema } from "effect"
 import type { Fact, Finding, MemoryFile, Progress } from "../schema.js"
 import { askJson } from "../llm.js"
 import { SCOPE_RANK } from "../scopes.js"
-import { evidenceAt, findingId, parseDate } from "../util.js"
+import { evidenceAt, factDate, findingId, frontmatterDays, keepListMarker } from "../util.js"
 
 const Extracted = Schema.Array(
   Schema.Struct({
@@ -99,7 +99,9 @@ Answer as JSON only: an array of groups, each an array of 2+ keys copied exactly
     const groups = new Map<string, Fact[]>()
     // Facts that are explicitly about a past value ("previous date", "former owner") are history, not current claims.
     const PAST = /\b(previous|prior|former|old|original|was)\b/i
-    for (const f of facts.filter((x) => !PAST.test(x.attribute))) {
+    // Values that only point elsewhere ("see status.md for the current date") state nothing to conflict with.
+    const POINTER = /^\s*(see|refer to|per|check)\b|\bsee [\w./-]+\.md\b/i
+    for (const f of facts.filter((x) => !PAST.test(x.attribute) && !POINTER.test(x.value))) {
       const k = canon[simpleKey(f)] ?? simpleKey(f)
       groups.set(k, [...(groups.get(k) ?? []), f])
     }
@@ -108,6 +110,7 @@ Answer as JSON only: an array of groups, each an array of 2+ keys copied exactly
     )
 
     const byPath = new Map(files.map((f) => [f.path, f]))
+    const fmDays = new Map(files.map((f) => [f.path, frontmatterDays(f.lines, today)]))
     const findings: Finding[] = []
     const superseded: { older: Fact; newer: Fact }[] = []
     let judged = 0
@@ -116,7 +119,10 @@ Answer as JSON only: an array of groups, each an array of 2+ keys copied exactly
       ([key, fs]) =>
         Effect.gen(function* () {
           // Winner: newest dated value, else the highest scope.
-          const scored = fs.map((f) => ({ f, date: parseDate(f.asOf, today), rank: SCOPE_RANK[byPath.get(f.file)!.scope] }))
+          const scored = fs.map((f) => {
+            const file = byPath.get(f.file)!
+            return { f, date: factDate(f.asOf, f.text, fmDays.get(f.file)!, today), rank: SCOPE_RANK[file.scope] }
+          })
           const winner = [...scored].sort((a, b) => (b.date?.getTime() ?? -1) - (a.date?.getTime() ?? -1) || b.rank - a.rank)[0]!
           const list = fs
             .map((f, i) => `#${i} [${f.file}, ${byPath.get(f.file)!.scope} scope${f.asOf ? `, as of ${f.asOf}` : ""}] ${f.text}`)
@@ -164,12 +170,14 @@ Answer as JSON only: {"kind": "conflict" | "history" | "different_context" | "sa
             check: "contradiction",
             severity: companyInvolved ? "high" : "medium",
             title: `${winner.f.subject} ${winner.f.attribute} differs: ${values.slice(0, 3).join(" vs ")}`,
-            explanation: `${verdict.reason} Suggested fix keeps "${winner.f.value}" from ${winner.f.file} (${winner.date ? `newest dated value, ${winner.f.asOf}` : "highest scope, no dates given"}).`,
+            // The judge sees statements as #0, #1…; show readers file paths instead.
+            explanation: `${verdict.reason.replace(/#(\d+)/g, (m, i: string) => fs[Number(i)]?.file ?? m)} Suggested fix keeps "${winner.f.value}" from ${winner.f.file} (${winner.date ? `newest dated value, ${winner.f.asOf}` : "highest scope, no dates given"}).`,
             evidence,
             suggestedFix: (verdict.rewrites ?? []).flatMap((r) => {
               const f = fs[r.index]
               if (!f || f === winner.f) return []
-              return [{ file: f.file, before: byPath.get(f.file)!.lines.slice(f.lineStart - 1, f.lineEnd).join("\n"), after: r.after }]
+              const before = byPath.get(f.file)!.lines.slice(f.lineStart - 1, f.lineEnd).join("\n")
+              return [{ file: f.file, before, after: keepListMarker(before, r.after) }]
             }),
           })
         }),

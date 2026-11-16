@@ -19,7 +19,7 @@ export const evidenceAt = (f: MemoryFile, lineStart: number, lineEnd = lineStart
 
 const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"]
 const DATE_RE = new RegExp(
-  String.raw`\b(\d{4})-(\d{2})-(\d{2})\b|\b(${MONTHS.join("|")})[a-z]*\.?\s+(\d{1,2})(?:st|nd|rd|th)?(?:,?\s+(\d{4}))?\b`,
+  String.raw`\b(\d{4})-(\d{2})-(\d{2})(?!\d)|\b(${MONTHS.join("|")})[a-z]*\.?\s+(\d{1,2})(?:st|nd|rd|th)?(?:,?\s+(\d{4}))?\b`,
   "gi",
 )
 
@@ -42,4 +42,29 @@ export const stripDates = (text: string) => text.replace(DATE_RE, " ")
 export const parseDate = (s: string | undefined, today: Date): Date | undefined => {
   if (!s) return undefined
   return findDates(s, today)[0]
+}
+
+const day = (d: Date) => d.toISOString().slice(0, 10)
+
+// Dates that appear only in a leading YAML frontmatter block (export/tool metadata, not a statement about any fact).
+// A date the body also states (e.g. "Last updated: Nov 12") is kept.
+export const frontmatterDays = (lines: readonly string[], today: Date): Set<string> => {
+  if (lines[0]?.trim() !== "---") return new Set()
+  const end = lines.findIndex((l, i) => i > 0 && l.trim() === "---")
+  if (end < 0) return new Set()
+  const body = new Set(lines.slice(end + 1).flatMap((l) => findDates(l, today)).map(day))
+  return new Set(lines.slice(1, end).flatMap((l) => findDates(l, today)).map(day).filter((d) => !body.has(d)))
+}
+
+// A fact's date only counts if it isn't just the frontmatter timestamp, unless the fact's own line repeats it.
+export const factDate = (asOf: string | undefined, text: string, fmDays: Set<string>, today: Date): Date | undefined => {
+  const d = parseDate(asOf, today)
+  if (!d || !fmDays.has(day(d))) return d
+  return findDates(text, today).some((x) => day(x) === day(d)) ? d : undefined
+}
+
+// Keep the original line's indentation and list marker if a rewrite dropped them.
+export const keepListMarker = (before: string, after: string): string => {
+  const marker = before.match(/^\s*(?:[-*+]|\d+\.)\s+/)?.[0]
+  return marker && !/^\s*(?:[-*+]|\d+\.)\s+/.test(after) ? marker + after.trimStart() : after
 }
