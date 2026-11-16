@@ -22,7 +22,7 @@ With `claude-haiku-5-5`: 233 facts extracted, cold run about 20 seconds, warm (c
 - **The false positive:** the key-merging call grouped "SOC 2 vendor questionnaire status" with the unrelated launch checklist item "SOC 2 report not yet shared with Harbor & Rail", and the judge called them a conflict. The real SOC 2 issue (a status blocked "as of Oct 3", resolved Oct 21) is reported as stale, which is correct.
 - **Rough edge:** the duplicate check finds the company one-liner in 2 of its 3 files: the Atlas copy has a prefix that drops similarity below 0.8. It still counts as caught.
 - **Without an API key** the four contradictions are missed by design, since they need fact extraction.
-- **Variance:** LLM results can shift between prompt or model changes. They are deterministic on re-runs because responses are cached.
+- **Variance:** the numbers above come from one cached set of model responses. A second run from an empty cache missed the launch-date contradiction (13 of 14, same false positive), because fact extraction worded the keys differently. Re-runs are deterministic only because responses are cached; prompt or model changes can shift results.
 
 Real trial export: _not run yet_.
 

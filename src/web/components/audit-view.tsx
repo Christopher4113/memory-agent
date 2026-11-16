@@ -190,6 +190,7 @@ export const FindingsList = ({
           return (
             <button
               key={c}
+              data-testid={`chip-${c}`}
               onClick={() => onFilter(c)}
               aria-pressed={filter === c}
               className={cn(
@@ -219,6 +220,8 @@ export const FindingsList = ({
             {shown.map((f) => (
               <li key={f.id} className="border-b border-hairline last:border-b-0">
                 <button
+                  data-testid="finding"
+                  data-title={f.title}
                   onClick={() => onSelect(f.id)}
                   className={cn("flex w-full flex-col gap-1 px-3 py-2.5 text-left hover:bg-[#f7f7f6]", selectedId === f.id && "bg-secondary hover:bg-secondary")}
                 >
@@ -302,6 +305,22 @@ const fixText = (f: Finding) =>
     .map((e) => `--- ${e.file}\n+++ ${e.file}\n${e.before.split("\n").map((l) => `-${l}`).join("\n")}${e.after ? `\n${e.after.split("\n").map((l) => `+${l}`).join("\n")}` : ""}`)
     .join("\n\n")
 
+// Clipboard API first; the textarea fallback covers pages without clipboard permission.
+const copyText = async (text: string): Promise<boolean> => {
+  try {
+    await navigator.clipboard.writeText(text)
+    return true
+  } catch {
+    const ta = document.createElement("textarea")
+    ta.value = text
+    document.body.appendChild(ta)
+    ta.select()
+    const ok = document.execCommand("copy")
+    ta.remove()
+    return ok
+  }
+}
+
 export const FindingDetail = ({ runId, finding }: { runId: number; finding: Finding | undefined }) => {
   const [copied, setCopied] = useState(false)
   useEffect(() => setCopied(false), [finding?.id])
@@ -332,7 +351,7 @@ export const FindingDetail = ({ runId, finding }: { runId: number; finding: Find
               size="sm"
               variant="secondary"
               className="ml-auto"
-              onClick={() => void navigator.clipboard.writeText(fixText(finding)).then(() => setCopied(true))}
+              onClick={() => void copyText(fixText(finding)).then(setCopied)}
             >
               {copied ? <Check /> : <Copy />} {copied ? "Copied" : "Copy fix"}
             </Button>
@@ -410,7 +429,7 @@ export const AuditView = ({ run, runs, formula }: { run: AuditRun; runs: RunSumm
           fileFilter={fileFilter}
           onClearFile={() => setFileFilter(undefined)}
         />
-        <div className="min-h-0 overflow-y-auto pr-1">
+        <div className="min-h-0 overflow-y-auto pr-1 pb-32">
           <FindingDetail runId={run.id} finding={selected} />
         </div>
       </div>

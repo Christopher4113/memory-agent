@@ -1,0 +1,141 @@
+schema_version = 1
+id = "memory-audit"
+url = "http://localhost:5174/"
+size = "1440x900@1.5"
+theme = "light"
+seed = 1
+
+[caption]
+position = "bottom"
+min_seconds = 1.5
+
+# Before recording: `pnpm demo:serve` and `pnpm demo:seed`, so the page opens on run #1 (Northwind week 1).
+
+[[beat]]
+id = "intro"
+purpose = "Open on last week's audit"
+caption = "Audit the memory your agents share"
+sub = "Northwind demo: 20 Markdown files across company, project, agent and personal scopes"
+hold = 2.5
+[[beat.expect]]
+type = "text"
+target = {css = "select[aria-label='Select run']"}
+contains = "Run #1"
+
+[[beat]]
+id = "load"
+purpose = "Pick this week's memory snapshot"
+caption = "Load this week's memory"
+hold = 0.8
+[[beat.action]]
+type = "click"
+target = {role = "button", name = "Load demo (Northwind)"}
+[[beat.expect]]
+type = "value"
+target = {css = "select[aria-label='Demo snapshot']"}
+value = "current"
+
+[[beat]]
+id = "run"
+purpose = "Run every check and save the run"
+caption = "Run five checks"
+sub = "secrets, duplicates, scope leaks, contradictions, stale facts"
+hold = 1.0
+[[beat.action]]
+type = "click"
+target = {role = "button", name = "Run audit"}
+[[beat.expect]]
+type = "text"
+target = {css = "main"}
+contains = "vs. previous run (#1)"
+
+[[beat]]
+id = "score"
+purpose = "Health score, severity counts and the change since last week"
+caption = "A health score, and what got worse"
+sub = "100 minus 10 per high, 4 per medium, 1 per low finding"
+hold = 3.0
+[[beat.action]]
+type = "wait"
+target = {css = "main"}
+
+[[beat]]
+id = "contradiction"
+purpose = "Open a contradiction and show both files side by side"
+caption = "Contradictions, with every file side by side"
+sub = "The company file says Dec 2. The project files say Dec 9."
+hold = 3.5
+[[beat.action]]
+type = "click"
+target = {test_id = "chip-contradiction"}
+[[beat.action]]
+type = "click"
+target = {css = "[data-testid=finding][data-title^='v2 launch date']"}
+[[beat.expect]]
+type = "text"
+target = {css = "main h3"}
+contains = "v2 launch date differs"
+
+[[beat]]
+id = "fix"
+purpose = "Show the suggested edit as a diff"
+caption = "An exact fix, for a human to approve"
+sub = "Memory is never edited automatically"
+hold = 3.0
+[[beat.action]]
+type = "click"
+target = {role = "button", name = "Copy fix"}
+[[beat.action]]
+type = "scroll"
+dy = 220
+[[beat.expect]]
+type = "text"
+target = {css = "main"}
+contains = "Proposed edit only"
+
+[[beat]]
+id = "secret"
+purpose = "Show that a pasted key is caught and masked"
+caption = "Pasted API keys are caught and masked"
+hold = 2.5
+[[beat.action]]
+type = "click"
+target = {test_id = "chip-secret"}
+[[beat.action]]
+type = "click"
+target = {css = "[data-testid=finding][data-title^='Anthropic API key']"}
+[[beat.expect]]
+type = "text"
+target = {css = "main"}
+contains = "sk-ant…ONLY"
+
+[[beat]]
+id = "history"
+purpose = "Compare week 1 and week 2"
+caption = "Compare runs: memory got worse this week"
+hold = 3.5
+[[beat.action]]
+type = "click"
+target = {role = "button", name = "Run history"}
+[[beat.expect]]
+type = "text"
+target = {css = "main"}
+contains = "added"
+
+[[beat]]
+id = "results"
+purpose = "Score against the planted ground truth"
+caption = "Caught 14 of 14 planted issues"
+sub = "1 false positive, checked against expected.json"
+hold = 3.5
+[[beat.action]]
+type = "click"
+target = {role = "button", name = "Results"}
+[[beat.expect]]
+type = "text"
+target = {css = "main"}
+contains = "caught 14 of 14"
+
+[[beat]]
+id = "end"
+hold = 0.5

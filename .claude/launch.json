@@ -1,6 +1,21 @@
 {
   "version": "0.0.1",
   "configurations": [
-    { "name": "memory-audit", "runtimeExecutable": "pnpm", "runtimeArgs": ["dev"], "port": 5173 }
+    {
+      "name": "memory-audit",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "dev"
+      ],
+      "port": 5173
+    },
+    {
+      "name": "memory-audit-demo",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "demo:serve"
+      ],
+      "port": 5174
+    }
   ]
 }
